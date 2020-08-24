@@ -122,6 +122,12 @@ public final class SpringFactoriesLoader {
 		return loadSpringFactories(classLoader).getOrDefault(factoryTypeName, Collections.emptyList());
 	}
 
+	/**
+	 * 搜索所有spring.factories 中的项且加载到Map缓存中
+	 * 		- 从本项目的 src\main\resources\META-INF\spring.factories
+	 * 		- 从classpath中的jar包加载：jar:file:/D:/softward/mvn_repo/org/springframework/boot/spring-boot/2.3.3.RELEASE/spring-boot-2.3.3.RELEASE.jar!/META-INF/spring.factories
+	 * 		- ...	
+	 */
 	private static Map<String, List<String>> loadSpringFactories(@Nullable ClassLoader classLoader) {
 		MultiValueMap<String, String> result = cache.get(classLoader);
 		if (result != null) {
