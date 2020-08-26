@@ -88,6 +88,10 @@ public final class SpringFactoriesLoader {
 	 * @throws IllegalArgumentException if any factory implementation class cannot
 	 * be loaded or if an error occurs while instantiating any factory
 	 * @see #loadFactoryNames
+	 * 
+	 * 调用例子：
+	 * 		List<AutoConfigurationImportFilter> xxList = 
+	 * 			SpringFactoriesLoader.loadFactories(AutoConfigurationImportFilter.class, this.beanClassLoader);
 	 */
 	public static <T> List<T> loadFactories(Class<T> factoryType, @Nullable ClassLoader classLoader) {
 		Assert.notNull(factoryType, "'factoryType' must not be null");
@@ -108,6 +112,8 @@ public final class SpringFactoriesLoader {
 	}
 
 	/**
+	 * 从{@value #FACTORIES_RESOURCE_LOCATION}加载所有key/value到 Map<String, List<String>>缓存，且返回给定的类型key集合
+	 * 
 	 * Load the fully qualified class names of factory implementations of the
 	 * given type from {@value #FACTORIES_RESOURCE_LOCATION}, using the given
 	 * class loader.
@@ -116,6 +122,8 @@ public final class SpringFactoriesLoader {
 	 * {@code null} to use the default
 	 * @throws IllegalArgumentException if an error occurs while loading factory names
 	 * @see #loadFactories
+	 * 
+	 * @return : List<String> valueStringList = Map<String, List<String>>.get(key)
 	 */
 	public static List<String> loadFactoryNames(Class<?> factoryType, @Nullable ClassLoader classLoader) {
 		String factoryTypeName = factoryType.getName();
@@ -123,7 +131,7 @@ public final class SpringFactoriesLoader {
 	}
 
 	/**
-	 * 搜索所有spring.factories 中的项且加载到Map缓存中
+	 * 将spring.factories 中的所有key/value加载到Map缓存中, 注意：只是全限定类名，未初始化类
 	 * 		- 从本项目的 src\main\resources\META-INF\spring.factories
 	 * 		- 从classpath中的jar包加载：jar:file:/D:/softward/mvn_repo/org/springframework/boot/spring-boot/2.3.3.RELEASE/spring-boot-2.3.3.RELEASE.jar!/META-INF/spring.factories
 	 * 		- ...	
