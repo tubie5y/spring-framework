@@ -52,6 +52,19 @@ import org.springframework.core.type.filter.TypeFilter;
  * @since 3.1
  * @see Configuration
  */
+
+/**
+ * 注解@ComponentScan:
+ * 		@ComponentScan 对应于XML配置形式中的 <context:component-scan>，用于将一些标注了特定注解的bean定义批量采集注册到Spring的IoC容器之中，这些特定的注解大致包括：
+ * 			@Controller
+ * 			@Entity
+ * 			@Component
+ * 			@Service
+ * 			@Repository
+ * 			等等
+ * 	对于该注解，还可以通过 basePackages 属性来更细粒度的控制该注解的自动扫描范围，比如：@ComponentScan(basePackages = {"cn.codesheep.controller","cn.codesheep.entity"})
+ *
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented

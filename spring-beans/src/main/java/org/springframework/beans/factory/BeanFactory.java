@@ -21,6 +21,14 @@ import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 
 /**
+ * BeanFactory 和ApplicationContext的区别
+ * 		BeanFactory 和ApplicationContext都是接口，并且ApplicationContext间接继承了BeanFactory。
+ * 		BeanFactory是Spring中最底层的接口，提供了最简单的容器的功能，只提供了实例化对象和获取对象的功能，而ApplicationContext是Spring的一个更高级的容器，提供了更多的有用的功能。
+ * 		ApplicationContext提供的额外的功能：获取Bean的详细信息(如定义、类型)、国际化的功能、统一加载资源的功能、强大的事件机制、对Web应用的支持等等。
+ * 		加载方式的区别：BeanFactory采用的是延迟加载的形式来注入Bean；ApplicationContext则相反的，它是在Ioc启动时就一次性创建所有的Bean,好处是可以马上发现Spring配置文件中的错误，坏处是造成浪费。
+ */
+
+/**
  * The root interface for accessing a Spring bean container.
  *
  * <p>This is the basic client view of a bean container;
