@@ -922,13 +922,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// Implementation of BeanDefinitionRegistry interface
 	//---------------------------------------------------------------------
 
+	/**
+	 * 向 IOC 容器中注册bean
+	 */
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
 
 		Assert.hasText(beanName, "Bean name must not be empty");
 		Assert.notNull(beanDefinition, "BeanDefinition must not be null");
-
+		// 如果是AbstractBeanDefinition 类型时，还需要校验下
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				((AbstractBeanDefinition) beanDefinition).validate();
@@ -938,10 +941,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						"Validation of bean definition failed", ex);
 			}
 		}
-
+		// 先从 ConcurrentHashMap<String, BeanDefinition>缓存中取
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
-		if (existingDefinition != null) {
-			if (!isAllowBeanDefinitionOverriding()) {
+		if (existingDefinition != null) { // 如果本地缓存中已经存在bean的定义信息(BeanDefinition)
+			if (!isAllowBeanDefinitionOverriding()) { // 如果缓存中已经存在，判断是否允许覆盖
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			}
 			else if (existingDefinition.getRole() < beanDefinition.getRole()) {
@@ -966,9 +969,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							"] with [" + beanDefinition + "]");
 				}
 			}
+			// 如果本地缓存中已经存在bean的定义信息(BeanDefinition)， 且允许被覆盖，则覆盖BeanDefinition
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
-		else {
+		else { // 如果本地缓存ConcurrentHashMap<String, BeanDefinition>中不存在
+			// 首先检查本地集合Set<String>中是否已经创建了，但是目前该bean 还没初始化完成，处于不可用状态。
 			if (hasBeanCreationStarted()) {
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
@@ -980,6 +985,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					removeManualSingletonName(beanName);
 				}
 			}
+			// 如果本地缓存 ConcurrentHashMap<String, BeanDefinition> 中不存在，并且处于创建阶段的Set<String> 集合中也不存在, 那么开始注册bean
 			else {
 				// Still in startup registration phase
 				this.beanDefinitionMap.put(beanName, beanDefinition);

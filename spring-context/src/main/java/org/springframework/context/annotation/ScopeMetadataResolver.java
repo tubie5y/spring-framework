@@ -19,6 +19,13 @@ package org.springframework.context.annotation;
 import org.springframework.beans.factory.config.BeanDefinition;
 
 /**
+ * 用于解析bean定义范围的策略接口, 即{@link Scope}
+ * bean Scope有哪些值?
+ * @see ConfigurableBeanFactory#SCOPE_PROTOTYPE
+ * @see ConfigurableBeanFactory#SCOPE_SINGLETON
+ * @see org.springframework.web.context.WebApplicationContext#SCOPE_REQUEST
+ * @see org.springframework.web.context.WebApplicationContext#SCOPE_SESSION
+ *
  * Strategy interface for resolving the scope of bean definitions.
  *
  * @author Mark Fisher

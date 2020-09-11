@@ -17,6 +17,8 @@
 package org.springframework.core.env;
 
 /**
+ * 可以从一个 EnvironmentCapable 的实现类，获取 {@link Environment} 引用，所有的 Spring application contexts 都是EnvironmentCapable！
+ * 
  * Interface indicating a component that contains and exposes an {@link Environment} reference.
  *
  * <p>All Spring application contexts are EnvironmentCapable, and the interface is used primarily

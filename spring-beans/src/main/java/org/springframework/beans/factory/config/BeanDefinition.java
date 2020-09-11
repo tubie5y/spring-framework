@@ -23,6 +23,9 @@ import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 
 /**
+ * BeanDefinition 描述一个bean实例，该实例具有属性值，构造函数参数值，和 进一步的信息由具体实现提供。
+ * 这只是一个最小的接口: 主要目的是允许{@link BeanFactoryPostProcessor}来内省, 修改属性值和其他bean元数据。
+ *
  * A BeanDefinition describes a bean instance, which has property values,
  * constructor argument values, and further information supplied by
  * concrete implementations.
@@ -58,6 +61,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 
 	/**
+	 * 通常对应于用户定义的bean
 	 * Role hint indicating that a {@code BeanDefinition} is a major part
 	 * of the application. Typically corresponds to a user-defined bean.
 	 */
@@ -75,6 +79,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	int ROLE_SUPPORT = 1;
 
 	/**
+	 * 与最终用户无关的，用于框架内部使用的，比如一些 post processor 的注册时，使用的就是这个等级的
+	 *
 	 * Role hint indicating that a {@code BeanDefinition} is providing an
 	 * entirely background role and has no relevance to the end-user. This hint is
 	 * used when registering beans that are completely part of the internal workings

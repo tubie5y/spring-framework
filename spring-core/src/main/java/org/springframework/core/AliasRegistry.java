@@ -17,6 +17,10 @@
 package org.springframework.core;
 
 /**
+ * IOC中用于管理别名的公共接口。作为 BeanDefinitionRegistry 的父接口
+ * 		- 给定一个bean name，在 IOC 中为它注册一个别名；
+ * 		- 删除别名
+ *
  * Common interface for managing aliases. Serves as a super-interface for
  * {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}.
  *

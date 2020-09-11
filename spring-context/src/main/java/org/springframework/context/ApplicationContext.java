@@ -24,6 +24,15 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.lang.Nullable;
 
 /**
+ * 为应用程序提供配置的中心接口，在应用程序运行时，它是只读的, 但是如果实现支持的话，可以被重新加载。
+ * ApplicationContext 提供了如下功能：
+ * 	- 用于访问应用程序组件的Bean工厂方法, 从 {@link org.springframework.beans.factory.ListableBeanFactory} 接口继承
+ *  - 以通用方式加载文件资源的能力, 从 {@link org.springframework.core.io.ResourceLoader} 接口继承
+ *  - 能够向已注册的监听器发布事件：从 {@link ApplicationEventPublisher} 接口继承
+ *  - 解析消息的能力，支持国际化，从 {@link MessageSource} 接口继承
+ *
+ *
+ *
  * Central interface to provide configuration for an application.
  * This is read-only while the application is running, but may be
  * reloaded if the implementation supports this.
