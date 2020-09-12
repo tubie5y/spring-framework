@@ -71,6 +71,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
@@ -308,6 +309,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * 关于getEnvironment()的顶层接口位于：{@link EnvironmentCapable#getEnvironment()}，
+	 * 有如下实现(注意ConfigurableApplicationContext是接口，所以其实容器的实现只有AbstractApplicationContext)：
+	 *
 	 * Return the {@code Environment} for this application context in configurable
 	 * form, allowing for further customization.
 	 * <p>If none specified, a default environment will be initialized via
@@ -513,43 +517,95 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return this.applicationListeners;
 	}
 
+	/**
+	 * refresh()方法是Spring容器启动的核心中的核心, 使用模板方法设计模式
+	 *
+	 */
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
+			/**
+			 * 容器刷新前的准备，设置上下文状态，获取属性，验证必要的属性等
+			 */
 			// Prepare this context for refreshing.
 			prepareRefresh();
 
+			/**
+			 * 获取新的beanFactory，销毁原有beanFactory、为每个bean生成BeanDefinition等  注意，此处是获取新的，销毁旧的，这就是刷新的意义
+			 */
 			// Tell the subclass to refresh the internal bean factory.
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
+			/**
+			 * 配置标准的beanFactory，设置ClassLoader，设置SpEL表达式解析器等
+			 */
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
 
 			try {
+				/**
+				 * 【模板方法】允许在子类中对beanFactory进行后置处理。
+				 */
 				// Allows post-processing of the bean factory in context subclasses.
 				postProcessBeanFactory(beanFactory);
 
+				/**
+				 * 实例化并调用所有注册的beanFactory后置处理器（实现接口BeanFactoryPostProcessor的bean）。
+				 * 在beanFactory标准初始化之后执行  例如：PropertyPlaceholderConfigurer(处理占位符)
+				 */
 				// Invoke factory processors registered as beans in the context.
 				invokeBeanFactoryPostProcessors(beanFactory);
 
+				/**
+				 * 实例化和注册beanFactory中扩展了BeanPostProcessor的bean。
+				 * 例如：
+				 * 		AutowiredAnnotationBeanPostProcessor(处理被@Autowired注解修饰的bean并注入)
+				 * 		RequiredAnnotationBeanPostProcessor(处理被@Required注解修饰的方法)
+				 * 		CommonAnnotationBeanPostProcessor(处理@PreDestroy、@PostConstruct、@Resource等多个注解的作用)
+				 */
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
 
+				/**
+				 * 初始化国际化工具类MessageSource
+				 */
 				// Initialize message source for this context.
 				initMessageSource();
 
+				/**
+				 * 初始化事件广播器
+				 */
 				// Initialize event multicaster for this context.
 				initApplicationEventMulticaster();
 
+				/**
+				 * 【模板方法】在容器刷新的时候可以自定义逻辑（子类自己去实现逻辑），不同的Spring容器做不同的事情
+				 */
 				// Initialize other special beans in specific context subclasses.
 				onRefresh();
 
+				/**
+				 * 注册监听器，并且广播early application events,也就是早期的事件
+				 */
 				// Check for listener beans and register them.
 				registerListeners();
 
+				/**
+				 * 非常重要!!!
+				 * 实例化所有剩余的（非懒加载）单例Bean。（也就是我们自己定义的那些Bean）
+				 * 比如invokeBeanFactoryPostProcessors方法中根据各种注解解析出来的类，在这个时候都会被初始化  扫描的 @Bean之类的
+				 * 实例化的过程各种BeanPostProcessor开始起作用~~~~~
+				 */
 				// Instantiate all remaining (non-lazy-init) singletons.
 				finishBeanFactoryInitialization(beanFactory);
 
+				/**
+				 * 最后一步：
+				 * refresh做完之后需要做的其他事情：
+				 * 		清除上下文资源缓存（如扫描中的ASM元数据）
+				 * 		初始化上下文的生命周期处理器，并刷新（找出Spring容器中实现了Lifecycle接口的bean并执行start()方法）。
+				 * 		发布ContextRefreshedEvent事件告知对应的ApplicationListener进行响应的操作
+				 */
 				// Last step: publish corresponding event.
 				finishRefresh();
 			}
@@ -560,9 +616,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 							"cancelling refresh attempt: " + ex);
 				}
 
+				/**
+				 * 如果刷新失败那么就会将已经创建好的单例Bean销毁掉
+				 */
 				// Destroy already created singletons to avoid dangling resources.
 				destroyBeans();
 
+				/**
+				 * 重置context的活动状态 告知是失败的
+				 */
 				// Reset 'active' flag.
 				cancelRefresh(ex);
 
@@ -571,6 +633,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			}
 
 			finally {
+				/**
+				 * 失败与否，都会重置Spring内核的缓存。因为可能不再需要metadata给单例Bean了。
+				 */
 				// Reset common introspection caches in Spring's core, since we
 				// might not ever need metadata for singleton beans anymore...
 				resetCommonCaches();
@@ -583,11 +648,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * active flag as well as performing any initialization of property sources.
 	 */
 	protected void prepareRefresh() {
+		// 记录容器启动时间，然后设立对应的标志位
 		// Switch to active.
 		this.startupDate = System.currentTimeMillis();
-		this.closed.set(false);
-		this.active.set(true);
+		this.closed.set(false); // AtomicBoolean
+		this.active.set(true); // AtomicBoolean
 
+		// 打印Debug日志：开始刷新this此容器了
 		if (logger.isDebugEnabled()) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Refreshing " + this);
@@ -597,9 +664,16 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			}
 		}
 
+		/**
+		 * 【模板方法】: 提供一个默认什么都不做的钩子方法，由子类去扩展。
+		 * 可以在验证之前为系统属性设置一些值等，因为我们这边是AnnotationConfigApplicationContext，可以看到不管父类还是自己，都什么都没做
+		 */
 		// Initialize any placeholder property sources in the context environment.
 		initPropertySources();
 
+		/**
+		 * 这里有两步，getEnvironment()，然后是是验证是否系统环境中有RequiredProperties参数值(其实就干了一件事，验证是否存在需要的属性)
+		 */
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
 		getEnvironment().validateRequiredProperties();
@@ -629,6 +703,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * refreshBeanFactory() 和 getBeanFactory()都是【模板方法】, 由子类实现
+	 * 在spring中，基本上各司其职，每个类都有每个类的作用。其中refreshBeanFactory()是具体的刷新BeanFactory,
+	 * 负责这个工作做在类 {@link AbstractRefreshableApplicationContext#refreshBeanFactory()}中，顾名思义这是专门用来刷新的：
+	 * 
+	 * 
 	 * Tell the subclass to refresh the internal bean factory.
 	 * @return the fresh BeanFactory instance
 	 * @see #refreshBeanFactory()

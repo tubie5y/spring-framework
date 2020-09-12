@@ -17,8 +17,9 @@
 package org.springframework.context;
 
 /**
- * Interface for objects that may participate in a phased
- * process such as lifecycle management.
+ * 为可能参与阶段性过程(如生命周期管理)的对象提供接口。
+ * 
+ * Interface for objects that may participate in a phased process such as lifecycle management.
  *
  * @author Mark Fisher
  * @since 3.0

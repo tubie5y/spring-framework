@@ -27,6 +27,12 @@ import org.springframework.core.io.ProtocolResolver;
 import org.springframework.lang.Nullable;
 
 /**
+ * SPI接口, 将由大多数(如果不是全部的话)应用程序上下文实现
+ * 除了{@link org.springframework.context.ApplicationContext}接口中的应用程序上下文客户端方法外，还提供了配置应用程序上下文的工具。
+ *
+ * 配置和生命周期方法被封装在这里，以避免它们对ApplicationContext客户端代码造成明显的影响。
+ * 这些现有的方法只能在启动和关闭代码中使用。
+ * 
  * SPI interface to be implemented by most if not all application contexts.
  * Provides facilities to configure an application context in addition
  * to the application context client methods in the
@@ -76,12 +82,14 @@ public interface ConfigurableApplicationContext extends ApplicationContext, Life
 	String ENVIRONMENT_BEAN_NAME = "environment";
 
 	/**
+	 * [JVM在运行时用到的系统属性]在IOC中bean的名字
 	 * Name of the System properties bean in the factory.
 	 * @see java.lang.System#getProperties()
 	 */
 	String SYSTEM_PROPERTIES_BEAN_NAME = "systemProperties";
 
 	/**
+	 * [操作系统的环境变量]在ioc中的名字
 	 * Name of the System environment bean in the factory.
 	 * @see java.lang.System#getenv()
 	 */
@@ -128,6 +136,8 @@ public interface ConfigurableApplicationContext extends ApplicationContext, Life
 	ConfigurableEnvironment getEnvironment();
 
 	/**
+	 * 添加一个新的BeanFactoryPostProcessor，它将在刷新时应用到这个应用程序上下文的内部bean工厂，然后再解析任何bean定义。在上下文配置期间调用。
+	 *
 	 * Add a new BeanFactoryPostProcessor that will get applied to the internal
 	 * bean factory of this application context on refresh, before any of the
 	 * bean definitions get evaluated. To be invoked during context configuration.
@@ -136,6 +146,9 @@ public interface ConfigurableApplicationContext extends ApplicationContext, Life
 	void addBeanFactoryPostProcessor(BeanFactoryPostProcessor postProcessor);
 
 	/**
+	 * 添加一个新的ApplicationListener，它将在上下文事件(如上下文刷新和上下文关闭)上得到通知。
+	 * 注意，如果上下文还没有激活，那么在这里注册的任何ApplicationListener都将在refresh时应用，或者在上下文已经激活的情况下与当前事件多播器一起运行。
+	 *
 	 * Add a new ApplicationListener that will be notified on context events
 	 * such as context refresh and context shutdown.
 	 * <p>Note that any ApplicationListener registered here will be applied
