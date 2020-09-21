@@ -39,6 +39,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.support.ResourceEditorRegistrar;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -552,6 +553,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				/**
 				 * 实例化并调用所有注册的beanFactory后置处理器（实现接口BeanFactoryPostProcessor的bean）。
 				 * 在beanFactory标准初始化之后执行  例如：PropertyPlaceholderConfigurer(处理占位符)
+				 *
+				 * 实现了接口：
+				 * 		{@link BeanFactoryPostProcessor}
+				 * 		{@link BeanDefinitionRegistryPostProcessor}
 				 */
 				// Invoke factory processors registered as beans in the context.
 				invokeBeanFactoryPostProcessors(beanFactory);
