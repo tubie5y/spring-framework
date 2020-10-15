@@ -41,6 +41,10 @@ import org.springframework.util.ObjectUtils;
  * @see Resource#getInputStream()
  * @see java.io.Reader
  * @see java.nio.charset.Charset
+ *
+ * my:
+ * 那么EncodedResource的作用是什么呢？通过名称，我们可以大致推断这个类主要是用于对资源文件的编码进行处理的。
+ * 其中的主要逻辑体现在{@link EncodedResource#getReader()}方法中，当设置了编码属性的时候Spring会使用相应的编码作为输入流的编码。
  */
 public class EncodedResource implements InputStreamSource {
 

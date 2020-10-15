@@ -62,6 +62,8 @@ public class XmlBeanFactory extends DefaultListableBeanFactory {
 	 * which must be parsable using DOM.
 	 * @param resource the XML resource to load bean definitions from
 	 * @throws BeansException in case of loading or parsing errors
+	 *
+	 * Spring中提供了很多的构造函数，在这里分析的是使用Resource实例作为构造函数参数的办法
 	 */
 	public XmlBeanFactory(Resource resource) throws BeansException {
 		this(resource, null);
@@ -72,10 +74,23 @@ public class XmlBeanFactory extends DefaultListableBeanFactory {
 	 * which must be parsable using DOM.
 	 * @param resource the XML resource to load bean definitions from
 	 * @param parentBeanFactory parent bean factory
+	 *                          parentBeanFactory为父类BeanFactory用于factory合并，可以为空
 	 * @throws BeansException in case of loading or parsing errors
 	 */
 	public XmlBeanFactory(Resource resource, BeanFactory parentBeanFactory) throws BeansException {
+		/**
+		 * 调用父类构造函数初始化
+		 */
 		super(parentBeanFactory);
+		/**
+		 * 重点!!!
+		 * 这句代码则是整个资源加载的切入点
+		 *
+		 * 梳理整个的处理过程如下
+		 * 1．封装资源文件。当进入XmlBeanDefinitionReader后首先对参数Resource使用EncodedResource类进行封装。
+		 * 2．获取输入流。从Resource中获取对应的InputStream并构造InputSource。
+		 * 3．通过构造的InputSource实例和Resource实例继续调用函数doLoadBeanDefinitions。
+		 */
 		this.reader.loadBeanDefinitions(resource);
 	}
 
