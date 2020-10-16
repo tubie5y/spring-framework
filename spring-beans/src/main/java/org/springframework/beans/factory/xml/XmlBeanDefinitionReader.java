@@ -441,6 +441,24 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @throws Exception when thrown from the DocumentLoader
 	 * @see #setDocumentLoader
 	 * @see DocumentLoader#loadDocument
+	 *
+	 * my:
+	 * 2.7　获取Document
+	 * 		经过了验证模式准备的步骤就可以进行Document加载了，同样XmlBeanFactoryReader类对于文档读取并没有亲力亲为，
+	 * 而是委托给了DocumentLoader去执行，这里的DocumentLoader是个接口，而真正调用的是 DefaultDocumentLoader;
+	 * 		对于这部分代码(指的是如下的DefaultDocumentLoader.loadDocument方法)其实并没有太多可以描述的，因为通过SAX解析XML文档的套路大致都差不多，
+	 * Spring在这里并没有什么特殊的地方，同样首先创建DocumentBuilderFactory，再通过DocumentBuilderFactory创建DocumentBuilder，进而解析inputSource来
+	 * 返回Document对象。对此感兴趣的读者可以在网上获取更多的资料。这里有必要提及一下EntityResolver，对于参数entityResolver，传入的是通
+	 * 过getEntityResolver()函数获取的返回值.
+	 *
+	 * 2.7.1　EntityResolver用法
+	 * 		在loadDocument方法中涉及一个参数EntityResolver，何为EntityResolver？官网这样解释: 如果SAX应用程序需要实现自定义处理外部实体，
+	 * 则必须实现此接口并使用setEntityResolver方法向SAX 驱动器注册一个实例。也就是说，对于解析一个XML，SAX首先读取该XML文档上的声明，
+	 * 根据声明去寻找相应的DTD定义，以便对文档进行一个验证。默认的寻找规则，即通过网络（实现上就是声明的DTD的URI地址）来下载相应的DTD声明，并进行认证。
+	 * 下载的过程是一个漫长的过程，而且当网络中断或不可用时，这里会报错，就是因为相应的DTD声明没有被找到的原因。
+	 * 		EntityResolver的作用是项目本身就可以提供一个如何寻找DTD声明的方法，即由程序来实现寻找DTD声明的过程，比如我们将DTD文件放到项目中某处，
+	 * 在实现时直接将此文档读取并返回给SAX即可。这样就避免了通过网络来寻找相应的声明。
+	 * 		...未完，太长了，参考相关章节吧
 	 */
 	protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
 		return this.documentLoader.loadDocument(inputSource, getEntityResolver(), this.errorHandler,
@@ -454,12 +472,19 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * <p>Override this method if you would like full control over the validation
 	 * mode, even when something other than {@link #VALIDATION_AUTO} was set.
 	 * @see #detectValidationMode
+	 * my:
+	 * 2.6.2: Spring通过getValidationModeForResource方法来获取对应资源的的验证模式。
+	 * 方法的实现其实还是很简单的，无非是如果设定了验证模式则使用设定的验证模式（可以通过对调用XmlBeanDefinitionReader中的setValidationMode方法进行设定），
+	 * 否则使用自动检测的方式。而自动检测验证模式的功能是在函数detectValidationMode方法中实现的，在detectValidationMode函数中又将自动检测验证模式的工作
+	 * 委托给了专门处理类XmlValidationModeDetector，调用了XmlValidationModeDetector的validationModeDetector方法
 	 */
 	protected int getValidationModeForResource(Resource resource) {
 		int validationModeToUse = getValidationMode();
+		//如果手动指定了验证模式则使用指定的验证模式
 		if (validationModeToUse != VALIDATION_AUTO) {
 			return validationModeToUse;
 		}
+		//如果未指定则使用自动检测
 		int detectedMode = detectValidationMode(resource);
 		if (detectedMode != VALIDATION_AUTO) {
 			return detectedMode;
