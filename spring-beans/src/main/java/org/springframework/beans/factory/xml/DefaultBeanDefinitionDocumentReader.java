@@ -346,6 +346,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * and registering it with the registry.
 	 */
 	/**
+	 * 默认标签解析函数的起始函数
+	 *
 	 * 乍一看，似乎一头雾水，没有以前的函数那样清晰的逻辑。大致的逻辑总结如下。
 	 * 1．首先委托BeanDefinitionDelegate类的parseBeanDefinitionElement方法进行元素解析，返回BeanDefinitionHolder类型的实例bdHolder，
 	 *    经过这个方法后，bdHolder实例已经包含我们配置文件中配置的各种属性了，例如class、name、id、alias之类的属性。
@@ -355,8 +357,22 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * 配合时序图（见图3-1），可能会更容易理解。
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+		/**
+		 * !!!
+		 */
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
+			/**
+			 * !!!
+			 * 首先大致了解下这句代码的作用，其实我们可以从语义上分析：如果需要的话就对beanDefinition进行装饰，那这句代码到底是什么功能呢？其实这句代码适用于这样的场景，如：
+			 *      <bean id="test" class="test.MyClass">
+			 *              <mybean:user username="aaa"/>
+			 *      </bean>
+			 * 当Spring中的bean使用的是默认的标签配置，但是其中的子元素却使用了自定义的配置时，这句代码便会起作用了。可能有人会有疑问，之前讲过，对bean的解析分为
+			 * 两种类型，一种是默认类型的解析，另一种是自定义类型的解析，这不正是自定义类型的解析吗？为什么会在默认类型解析中单独添加一个方法处理呢？确实，这个问题
+			 * 很让人迷惑，但是，不知道聪明的读者是否有发现，这个自定义类型并不是以Bean的形式出现的呢？我们之前讲过的两种类型的不同处理只是针对Bean的，这里我们看到，
+			 * 这个自定义类型其实是属性。
+			 */
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
