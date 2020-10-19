@@ -924,6 +924,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * 向 IOC 容器中注册bean
+	 *
+	 * -------------------------
+	 * 3.1.4-1．通过beanName注册BeanDefinition (书中分析的源码是5.0.x版本，和此处源码有差异，如下注释仅供参考)
+	 * 对于beanDefinition的注册，或许很多人认为的方式就是将beanDefinition直接放入map中就好了，使用beanName作为key。确实，Spring就是这么做的，
+	 * 只不过除此之外，它还做了点别的事情。
+	 * 下面的代码中我们看到，在对于bean的注册处理方式上，主要进行了几个步骤。
+	 * 1．对AbstractBeanDefinition的校验。在解析XML文件的时候我们提过校验，但是此校验非彼校验，之前的校验时针对于XML格式的校验，而此时的校验时针是对于AbstractBean- Definition的methodOverrides属性的。
+	 * 2．对beanName已经注册的情况的处理。如果设置了不允许bean的覆盖，则需要抛出异常，否则直接覆盖。
+	 * 3．加入map缓存。
+	 * 4．清除解析之前留下的对应beanName的缓存。
 	 */
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
@@ -934,6 +944,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// 如果是AbstractBeanDefinition 类型时，还需要校验下
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
+				/*
+				 * 注册前的最后一次校验，这里的校验不同于之前的XML文件校验，
+				 * 主要是对于AbstractBeanDefinition属性中的methodOverrides校验，
+				 * 校验methodOverrides是否与工厂方法并存或者methodOverrides对应的方法根本不存在
+				 */
 				((AbstractBeanDefinition) beanDefinition).validate();
 			}
 			catch (BeanDefinitionValidationException ex) {
@@ -943,8 +958,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 		// 先从 ConcurrentHashMap<String, BeanDefinition>缓存中取
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
-		if (existingDefinition != null) { // 如果本地缓存中已经存在bean的定义信息(BeanDefinition)
-			if (!isAllowBeanDefinitionOverriding()) { // 如果缓存中已经存在，判断是否允许覆盖
+		if (existingDefinition != null) { // 如果已经存在bean的定义信息(BeanDefinition)
+			//如果对应的BeanName已经注册且在配置中配置了bean不允许被覆盖，则抛出异常
+			if (!isAllowBeanDefinitionOverriding()) {
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			}
 			else if (existingDefinition.getRole() < beanDefinition.getRole()) {
@@ -975,6 +991,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		else { // 如果本地缓存ConcurrentHashMap<String, BeanDefinition>中不存在
 			// 首先检查本地集合Set<String>中是否已经创建了，但是目前该bean 还没初始化完成，处于不可用状态。
 			if (hasBeanCreationStarted()) {
+				//因为beanDefinitionMap是全局变量，这里定会存在并发访问的情况
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
 					this.beanDefinitionMap.put(beanName, beanDefinition);
@@ -987,8 +1004,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			// 如果本地缓存 ConcurrentHashMap<String, BeanDefinition> 中不存在，并且处于创建阶段的Set<String> 集合中也不存在, 那么开始注册bean
 			else {
+				//注册beanDefinition
 				// Still in startup registration phase
 				this.beanDefinitionMap.put(beanName, beanDefinition);
+				//记录beanName
 				this.beanDefinitionNames.add(beanName);
 				removeManualSingletonName(beanName);
 			}
@@ -996,6 +1015,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		if (existingDefinition != null || containsSingleton(beanName)) {
+			//重置所有beanName对应的缓存
 			resetBeanDefinition(beanName);
 		}
 		else if (isConfigurationFrozen()) {

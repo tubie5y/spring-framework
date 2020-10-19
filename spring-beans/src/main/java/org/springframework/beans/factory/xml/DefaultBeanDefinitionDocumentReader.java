@@ -238,7 +238,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
 			processBeanDefinition(ele, delegate);
 		}
-		//对beans标签的处理
+		//对beans标签的处理: 3.4　嵌入式beans标签的解析
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
 			// recurse
 			doRegisterBeanDefinitions(ele);
@@ -248,19 +248,35 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Parse an "import" element and load the bean definitions
 	 * from the given resource into the bean factory.
+	 * my:
+	 * 3.3　import标签的解析
+	 * 对于Spring配置文件的编写，我想，经历过庞大项目的人，都有那种恐惧的心理，太多的配置文件了。不过，分模块是大多数人能想到的方法，但是，怎么分模块，
+	 * 那就仁者见仁，智者见智了。使用import是个好办法，例如我们可以构造这样的Spring配置文件：
+	 *
+	 * 下面的代码不难，相信配合注释会很好理解，我们总结一下大致流程便于读者更好地梳理，在解析<import标签时，Spring进行解析的步骤大致如下。
+	 * 1．获取resource属性所表示的路径。
+	 * 2．解析路径中的系统属性，格式如“${user.dir}”。
+	 * 3．判定location是绝对路径还是相对路径。
+	 * 4．如果是绝对路径则递归调用bean的解析过程，进行另一次的解析。
+	 * 5．如果是相对路径则计算出绝对路径并进行解析。
+	 * 6．通知监听器，解析完成。
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
+		//获取resource属性
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
+		//如果不存在resource属性则不做任何处理
 		if (!StringUtils.hasText(location)) {
 			getReaderContext().error("Resource location must not be empty", ele);
 			return;
 		}
 
+		//解析系统属性，格式如： "${user.dir}"
 		// Resolve system properties: e.g. "${user.dir}"
 		location = getReaderContext().getEnvironment().resolveRequiredPlaceholders(location);
 
 		Set<Resource> actualResources = new LinkedHashSet<>(4);
 
+		//判定location是绝对URI还是相对URI
 		// Discover whether the location is an absolute or relative URI
 		boolean absoluteLocation = false;
 		try {
@@ -271,6 +287,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			// unless it is the well-known Spring prefix "classpath*:"
 		}
 
+		//如果是绝对URI则直接根据地址加载对应的配置文件
 		// Absolute or relative?
 		if (absoluteLocation) {
 			try {
@@ -285,15 +302,19 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 		else {
+			//如果是相对地址则根据相对地址计算出绝对地址
 			// No URL -> considering resource location as relative to the current file.
 			try {
 				int importCount;
+				//Resource存在多个子实现类，如VfsResource、FileSystemResource等，
+				//而每个resource的createRelative方式实现都不一样，所以这里先使用子类的方法尝试解析
 				Resource relativeResource = getReaderContext().getResource().createRelative(location);
 				if (relativeResource.exists()) {
 					importCount = getReaderContext().getReader().loadBeanDefinitions(relativeResource);
 					actualResources.add(relativeResource);
 				}
 				else {
+					//如果解析不成功，则使用默认的解析器ResourcePatternResolver进行解析
 					String baseLocation = getReaderContext().getResource().getURL().toString();
 					importCount = getReaderContext().getReader().loadBeanDefinitions(
 							StringUtils.applyRelativePath(baseLocation, location), actualResources);
@@ -310,15 +331,21 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						"Failed to import bean definitions from relative location [" + location + "]", ele, ex);
 			}
 		}
+		//解析后进行监听器激活处理
 		Resource[] actResArray = actualResources.toArray(new Resource[0]);
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
 	}
 
 	/**
 	 * Process the given alias element, registering the alias with the registry.
+	 * 3.2 alias标签的解析
+	 * 可以发现，跟之前讲过的bean中的alias解析大同小异，都是将别名与beanName组成一对注册至registry中。这里不再赘述。
+	 *
 	 */
 	protected void processAliasRegistration(Element ele) {
+		//获取beanName
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
+		//获取alias
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
@@ -331,12 +358,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		if (valid) {
 			try {
+				//注册alias
 				getReaderContext().getRegistry().registerAlias(name, alias);
 			}
 			catch (Exception ex) {
 				getReaderContext().error("Failed to register alias '" + alias +
 						"' for bean with name '" + name + "'", ele, ex);
 			}
+			//别名注册后通知监听器做相应处理
 			getReaderContext().fireAliasRegistered(name, alias, extractSource(ele));
 		}
 	}
@@ -372,9 +401,18 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			 * 两种类型，一种是默认类型的解析，另一种是自定义类型的解析，这不正是自定义类型的解析吗？为什么会在默认类型解析中单独添加一个方法处理呢？确实，这个问题
 			 * 很让人迷惑，但是，不知道聪明的读者是否有发现，这个自定义类型并不是以Bean的形式出现的呢？我们之前讲过的两种类型的不同处理只是针对Bean的，这里我们看到，
 			 * 这个自定义类型其实是属性。
+			 *
+			 * 我们总结下decorateBeanDefinitionIfRequired方法的作用，在decorateBeanDefinitionIfRequired中我们可以看到对于程序默认的标签的处
+			 * 理其实是直接略过的，因为默认的标签到这里已经被处理完了，这里只对自定义的标签或者说对bean的自定义属性感兴趣。在方法中实现了寻找自定义标签
+			 * 并根据自定义标签寻找命名空间处理器，并进行进一步的解析。
 			 */
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
+				/**
+				 * 3.1.4　注册解析的BeanDefinition
+				 * 对于配置文件，解析也解析完了，装饰也装饰完了，对于得到的beanDinition已经可以满足后续的使用要求了，唯一还剩下的工作就是注册了，
+				 * 也就是本行代码的解析了。
+				 */
 				// Register the final decorated instance.
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());
 			}
@@ -382,6 +420,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				getReaderContext().error("Failed to register bean definition with name '" +
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
+			/**
+			 * 3.1.5　通知监听器解析及注册完成
+			 * 通过本行代码完成此工作，这里的实现只为扩展，当程序开发人员需要对注册BeanDefinition事件进行监听时可以通过注册监听器的方式并将处理逻辑写入监听器中，
+			 * 目前在Spring中并没有对此事件做任何逻辑处理。
+			 */
 			// Send registration event.
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
