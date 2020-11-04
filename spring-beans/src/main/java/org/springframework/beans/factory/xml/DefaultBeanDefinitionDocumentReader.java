@@ -210,7 +210,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						parseDefaultElement(ele, delegate);
 					}
 					else {
-						//对bean的处理
+						//对bean的处理-- 第4章　自定义标签的解析, 4.1　自定义标签使用
 						delegate.parseCustomElement(ele);
 					}
 				}
