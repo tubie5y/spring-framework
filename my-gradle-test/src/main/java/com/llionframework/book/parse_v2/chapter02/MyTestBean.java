@@ -1,4 +1,4 @@
-package com.llionframework.src.parse.v2.chapter02;
+package com.llionframework.book.parse_v2.chapter02;
 
 public class MyTestBean {
 	private String testStr = "testStr";

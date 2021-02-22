@@ -1,10 +1,10 @@
-package com.llionframework.src.study.config.ext;
+package com.llionframework.ioc;
 
+import com.llionframework.ioc.dto.Blue;
+import com.llionframework.ioc.dto.MyBeanDefinitionRegistryPostProcessor;
+import com.llionframework.ioc.dto.MyBeanFactoryPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.llionframework.src.study.config.ext.dto.Blue;
-import com.llionframework.src.study.config.ext.dto.MyBeanDefinitionRegistryPostProcessor;
-import com.llionframework.src.study.config.ext.dto.MyBeanFactoryPostProcessor;
 
 @Configuration
 public class ExtConfig {

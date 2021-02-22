@@ -1,17 +1,16 @@
-package com.llionframework.src.parse.v2.chapter02;
+package com.llionframework.book.parse_v2.chapter02;
 
-import org.junit.Test;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 //import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 
-import static org.junit.Assert.assertEquals;
 
 public class BeanFactoryTest {
 	public static void main(String[] args) {
 //		testSimpleLoad();
+		testSimpleLoad2();
 	}
 
 //	public static void testSimpleLoad(){

@@ -1,6 +1,5 @@
-package com.llionframework.src.parse.v2.chapter02;
+package com.llionframework.book.parse_v2.chapter02;
 
-import com.llionframework.src.study.config.ext.dto.Blue;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

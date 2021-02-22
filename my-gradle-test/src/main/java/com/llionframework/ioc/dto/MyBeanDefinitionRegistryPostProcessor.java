@@ -1,4 +1,4 @@
-package com.llionframework.src.study.config.ext.dto;
+package com.llionframework.ioc.dto;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;

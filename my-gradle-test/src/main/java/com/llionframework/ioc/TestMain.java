@@ -1,8 +1,6 @@
-package com.llionframework.src.study.config.ext;
+package com.llionframework.ioc;
 
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.util.Arrays;
 
